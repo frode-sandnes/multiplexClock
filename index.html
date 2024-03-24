@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplex clock</title>
+
+    <style>
+        :root
+            {
+            color-scheme: dark;
+            }
+    </style>
+
+</head>
+
+<body>
+
+    <script>
+"use strict"
+
+
+// Bootstrapping
+window.addEventListener('DOMContentLoaded', (event) => start());
+
+function start()
+    {
+    updateHour();
+    updateMinute();
+    updateSecond();
+    
+    multiplexerHour();
+
+    updateHourDigit();
+    updateMinuteDigit();
+    updateSecondDigit();
+
+    multiplexerHourDigit();
+    }
+
+function updateHour()
+    {
+    let angle = 360*((new Date()).getHours()%12)/12;
+    drawDial({zoom:0, angle, thickness: 15, destinationId: "clockDestinationHour", face:"hsl(0 0 70)"}) 
+    setTimeout(updateHour, 10*60*1000);  // every 10 minutes      
+    }
+
+function updateHourDigit()
+    {
+    let digit = (new Date()).getHours();
+    drawDigit({scrapPst:0.2, digit,  destinationId: "digitDestinationHour", face:"hsl(0 0 70)"}) 
+    setTimeout(updateHourDigit, 10*60*1000);  // every 10 minutes      
+    }    
+
+function updateMinute()
+    {
+    let angle = 6*(new Date()).getMinutes();
+    drawDial({zoom:0.5,angle, thickness: 3, destinationId: "clockDestinationMinute", face:"hsl(0 0 40)"})
+    setTimeout(updateMinute, 10*1000);    // every 10 seconds
+    }
+function updateMinuteDigit()
+    {
+    let digit = (new Date()).getMinutes();
+    drawDigit({scrapPst:0.2, digit, destinationId: "digitDestinationMinute", face:"hsl(0 0 40)"})
+    setTimeout(updateMinuteDigit, 10*1000);    // every 10 seconds
+    }    
+//let angle = 0;
+function updateSecond()
+    {
+//    let angle = 6*(new Date()).getSeconds();
+    let t = new Date();
+//    angle = (angle+1) %360;
+    let angle = 6*(t.getSeconds() + t.getMilliseconds()/1000);
+//    let angle = 360*(new Date()).getMilliseconds()/1000;
+//console.log(angle);
+
+    drawDial({zoom:0.95, angle, thickness: 1, destinationId: "clockDestinationSecond", face:"hsl(0 0 20)"})
+    setTimeout(updateSecond, 200);   // every second
+    }
+    
+function updateSecondDigit()
+    {
+    let digit = (new Date()).getSeconds();
+    drawDigit({scrapPst:0.2, digit, destinationId: "digitDestinationSecond", face:"hsl(0 0 20)"})
+    setTimeout(updateSecondDigit, 1000);   // every second
+    }
+
+const cycleDelay = 2000;
+let digitHold = false;
+
+function multiplexerHourDigit()
+    {
+    let digit = (new Date()).getHours();
+    drawDigit({scrapPst:0.2, digit,  destinationId: "digitDestination", face:"hsl(0 0 70)"}) 
+    setTimeout(multiplexerMinuteDigit, cycleDelay);
+    }    
+function multiplexerMinuteDigit()
+    {
+    let digit = (new Date()).getMinutes();
+    drawDigit({scrapPst:0.2, digit, destinationId: "digitDestination", face:"hsl(0 0 40)"})
+    digitHold = true;
+    setTimeout(() =>{digitHold = false;}, cycleDelay*3);       // how long to hold the view
+    setTimeout(multiplexerSecondDigit, cycleDelay);
+    }
+function multiplexerSecondDigit()
+    {
+    let digit = (new Date()).getSeconds();
+    drawDigit({scrapPst:0.2, digit, destinationId: "digitDestination", face:"hsl(0 0 20)"})
+    if (digitHold)
+        {
+        setTimeout(multiplexerSecondDigit, 1000); 
+        }
+    else
+        {
+        setTimeout(multiplexerHourDigit, 1000);
+        }
+    }    
+
+function multiplexerHour()
+    {
+    let angle = 360*((new Date()).getHours()%12)/12;
+    drawDial({zoom:0, angle, thickness: 10, destinationId: "clockDestination", face:"hsl(0 0 70)"}) 
+    setTimeout(multiplexerMinute, cycleDelay);
+    }
+
+
+let hold = false;
+
+function multiplexerMinute()
+    {
+    let angle = 6*(new Date()).getMinutes();
+    drawDial({zoom:0.5, angle, thickness: 5, destinationId: "clockDestination", face:"hsl(0 0 40)"})
+    hold = true;
+    setTimeout(() =>{hold = false;}, cycleDelay*2);       // how long to hold the view
+    setTimeout(multiplexerSecond, cycleDelay);
+    }
+
+function multiplexerSecond()
+    {
+    let t = new Date();
+    let angle = 6*(t.getSeconds() + t.getMilliseconds()/1000);    
+    drawDial({zoom:1, angle, thickness: 1, destinationId: "clockDestination", face:"hsl(0 0 20)"})
+    if (hold)
+        {
+        setTimeout(multiplexerSecond, 100); 
+        }
+    else
+        {
+        setTimeout(multiplexerHour, 100);
+        }
+    }    
+function multiplexerSecond1()
+    {
+    let angle = 6*(new Date()).getSeconds();
+    drawDial({zoom:1, angle, thickness: 1, destinationId: "clockDestination", face:"hsl(0 0 20)"})
+    setTimeout(multiplexerSecond2, cycleDelay);
+    }
+function multiplexerSecond2()
+    {
+    let angle = 6*(new Date()).getSeconds();
+    drawDial({zoom:1, angle, thickness: 1, destinationId: "clockDestination", face:"hsl(0 0 20)"})
+    setTimeout(multiplexerSecond3, cycleDelay);
+    }
+function multiplexerSecond3()
+    {
+    let angle = 6*(new Date()).getSeconds();
+    drawDial({zoom:1, angle, thickness: 1, destinationId: "clockDestination", face:"hsl(0 0 20)"})
+    setTimeout(multiplexerHour, cycleDelay);
+    }
+
+
+function drawDial({zoom = 1, angle = 30, thickness = 10, sourceId = "clockSource", destinationId = "clockDestination", face = "hsl(0 100 70)"})
+    {
+    const canvas = document.getElementById(sourceId);
+
+    const w = canvas.width;
+    const h = canvas.height; 
+
+    let x = w/2;
+    let y = h/2;
+    let radius = x/2;
+    let startAngle = 0;
+    let endAngle = 360;
+    let counterclockwise = false;
+
+    const ctx = canvas.getContext("2d");
+
+    // set colours
+    ctx.fillStyle = "white";
+//    ctx.strokeStyle = "white";
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = face;
+
+    // draw main circle
+    ctx.beginPath();
+    ctx.arc(x, y, radius, startAngle, endAngle, counterclockwise);
+    ctx.fill();     
+
+    let handleThickness = thickness*(x/100);
+    let angleRad = Math.PI * (angle-90)/180;
+    let needleRadius = radius* 0.95;
+    // draw handle
+    ctx.strokeStyle = "white";    
+    ctx.lineWidth = handleThickness;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + needleRadius*Math.cos(angleRad), y + needleRadius*Math.sin(angleRad));
+    ctx.stroke();
+
+    // find cut area;
+//    let cutWidth = radius; 
+//    let cutWidth = radius/2; 
+    let cutWidth = radius/ (2*zoom + 0.5); 
+    let cropRadius = (0.5 + (0.95 - 0.5)*zoom) * radius;
+//    let cropRadius = radius * 0.8;
+    let [cx, cy] = [x + cropRadius*Math.cos(angleRad), y + cropRadius*Math.sin(angleRad)];  // centroid of rectange
+    let [x0, y0] = [cx - cutWidth/2, cy - cutWidth/2];  // upper left
+
+
+    // copy and paste region
+    const destination = document.getElementById(destinationId);
+    const destCtx = destination.getContext("2d");
+    destCtx.drawImage(canvas, x0, y0, cutWidth, cutWidth,
+                  0, 0, destination.width, destination.height);
+
+    // illustrate region
+/*    ctx.strokeStyle = "lime";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.rect(x0, y0, cutWidth, cutWidth);
+    ctx.stroke();*/
+    }
+
+function drawDigit({scrapPst = 0.1, digit, sourceId = "clockSource", destinationId = "clockDestination", face = "hsl(0 100 70)"})
+    {
+    const canvas = document.getElementById(sourceId);
+
+    const w = canvas.width;
+    const h = canvas.height; 
+
+    const ctx = canvas.getContext("2d");
+
+    // set colours
+    ctx.fillStyle = face;
+    ctx.fillRect(0, 0, w, h);
+    // draw digits
+    ctx.fillStyle = "white";
+    ctx.strokeStyle = "white";
+
+//    ctx.font = "bold 900px Arial";
+//    ctx.fillText(digit, -140, 900);
+
+//    ctx.font = "bold 500px Arial black";
+    ctx.font = "bold 500px Arial";
+    ctx.fillText(digit, 0, h);
+    var textWidth = ctx.measureText(digit).width;
+console.log(textWidth);
+    // find cut area;
+//    let cutWidth = radius/ (2*zoom + 0.5); 
+ //   let cropRadius = (0.5 + (0.95 - 0.5)*zoom) * radius;
+    //    let cropRadius = radius * 0.8;
+ //   let [cx, cy] = [x + cropRadius*Math.cos(angleRad), y + cropRadius*Math.sin(angleRad)];  // centroid of rectange
+ //   let [x0, y0] = [cx - cutWidth/2, cy - cutWidth/2];  // upper left
+//// let cutWidth = w; 
+//// let [x0, y0] = [0, 0];  // upper left
+// let scrapPst = 0.1;
+ let cutWidth = textWidth * (1 - scrapPst*2); 
+ let [x0, y0] = [textWidth*scrapPst, h-cutWidth];  // upper left
+
+
+    // copy and paste region
+    const destination = document.getElementById(destinationId);
+    const destCtx = destination.getContext("2d");
+    destCtx.drawImage(canvas, x0, y0, cutWidth, cutWidth,
+              0, 0, destination.width, destination.height);
+    }
+
+
+
+    </script>
+
+    <h1>Multiplex analog clock demo</h1>
+
+    <h2>Clockface space multiplexing</h2>
+    <canvas id="clockSource" width="1000" height="1000" style="border: solid" hidden></canvas>
+    <canvas id="clockDestinationHour" width="200" height="200" style="border: solid"></canvas>
+    <canvas id="clockDestinationMinute" width="200" height="200" style="border: solid"></canvas>
+    <canvas id="clockDestinationSecond" width="200" height="200" style="border: solid"></canvas>
+    
+    <h2>Clockface time multiplexing</h2>
+    <canvas id="clockDestination" width="200" height="200" style="border: solid"></canvas>
+
+    <h2>Digit zoom</h2>   
+    <canvas id="digitDestinationHour" width="200" height="200" style="border: solid"></canvas>
+    <canvas id="digitDestinationMinute" width="200" height="200" style="border: solid"></canvas>
+    <canvas id="digitDestinationSecond" width="200" height="200" style="border: solid"></canvas>
+
+    <h2>Digit time multiplexing</h2>
+    <canvas id="digitDestination" width="200" height="200" style="border: solid"></canvas>
+
+</body>
+</html>
